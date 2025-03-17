@@ -11,6 +11,6 @@ namespace APIs.Models
         public DateTime EndDate { get; set; }
         [ForeignKey(nameof(Trainer))]
         public string TrainerId { get; set; }
-        public Trainer Trainer { get; set; }
+        public virtual Trainer Trainer { get; set; }
     }
 }
