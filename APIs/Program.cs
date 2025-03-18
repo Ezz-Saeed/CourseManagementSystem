@@ -2,7 +2,9 @@
 using APIs.Data;
 using APIs.Extensions;
 using APIs.Helpers;
+using APIs.Interfaces;
 using APIs.Models;
+using APIs.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -17,10 +19,7 @@ namespace APIs
             // Add services to the container.
 
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-
+            
             builder.Services.AddIdentity<Appuser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>();
             var connection = builder.Configuration.GetConnectionString("connection") ?? 
                 throw new NullReferenceException("connection couldn't be found");
@@ -28,18 +27,15 @@ namespace APIs
             {
                 options.UseSqlServer(connection);
             });
+            builder.Services.AddScoped<IAuthService, AuthService>();
 
             builder.Services.Configure<JWT>(builder.Configuration.GetSection("JWT"));
 
             builder.Services.AddIdentityServices(builder.Configuration);
+            builder.Services.AddSwagerService();
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
+            app.UseSwaggerService();
 
             app.UseHttpsRedirection();
 
