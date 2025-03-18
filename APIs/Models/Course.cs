@@ -10,7 +10,7 @@ namespace APIs.Models
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
         [ForeignKey(nameof(Trainer))]
-        public string TrainerId { get; set; }
-        public virtual Trainer Trainer { get; set; }
+        public string? TrainerId { get; set; }
+        public virtual Trainer? Trainer { get; set; }
     }
 }
