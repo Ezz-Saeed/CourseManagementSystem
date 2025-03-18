@@ -1,5 +1,7 @@
 
 using APIs.Data;
+using APIs.Models;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace APIs
@@ -16,6 +18,8 @@ namespace APIs
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddIdentity<Appuser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>();
             var connection = builder.Configuration.GetConnectionString("connection") ?? 
                 throw new NullReferenceException("connection couldn't be found");
             builder.Services.AddDbContext<AppDbContext>(options =>

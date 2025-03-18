@@ -1,9 +1,7 @@
 ﻿namespace APIs.Models
 {
-    public class Trainer
+    public class Trainer : Appuser
     {
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public virtual ICollection<Course>? Courses { get; set; }
+       
     }
 }
