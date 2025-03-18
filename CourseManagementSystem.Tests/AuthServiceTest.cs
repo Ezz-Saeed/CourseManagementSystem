@@ -118,5 +118,158 @@ namespace CourseManagementSystem.Tests
             Assert.Contains("Passwords must be at least", result.Message);
         }
 
+        // Test for GetToken method
+
+        [Fact]
+        //Login with valid credentials
+        public async Task GetTokenAsync_WhenCredentialsAreValid_ReturnsAuthenticatedResult()
+        {
+            // Arrange
+            var user = new Appuser
+            {
+                UserName = "testuser",
+                Email = "test@example.com",
+                FirstName = "John",
+                LastName = "Doe",
+                RefreshTokens = new List<RefreshToken>()
+            };
+
+            await _userManager.CreateAsync(user, "Secure@123");
+            await _userManager.AddToRoleAsync(user, "Trainer");
+
+            var loginDto = new LoginDto
+            {
+                Email = "test@example.com",
+                Password = "Secure@123"
+            };
+
+            // Act
+            var result = await _sut.GetTokenAsync(loginDto);
+
+            // Assert
+            Assert.True(result.IsAuthenticated);
+            Assert.Equal(user.Email, result.Email);
+            Assert.Contains("Trainer", result.Roles);
+            Assert.NotNull(result.Token);
+            Assert.True(result.ExpiresOn > DateTime.UtcNow);
+        }
+
+
+
+        [Fact]
+        //Login with invalid email
+        public async Task GetTokenAsync_WhenEmailIsInvalid_ReturnsErrorMessage()
+        {
+            // Arrange
+            var loginDto = new LoginDto
+            {
+                Email = "wrong@example.com",
+                Password = "Secure@123"
+            };
+
+            // Act
+            var result = await _sut.GetTokenAsync(loginDto);
+
+            // Assert
+            Assert.False(result.IsAuthenticated);
+            Assert.Equal("Invalid email or password!", result.Message);
+        }
+
+
+        [Fact]
+        //Login with valid password
+        public async Task GetTokenAsync_WhenPasswordIsInvalid_ReturnsErrorMessage()
+        {
+            // Arrange
+            var user = new Appuser
+            {
+                UserName = "testuser",
+                Email = "test@example.com",
+                FirstName = "John",
+                LastName = "Doe",
+                RefreshTokens = new List<RefreshToken>()
+            };
+
+            await _userManager.CreateAsync(user, "Secure@123");
+            await _userManager.AddToRoleAsync(user, "Trainer");
+
+            var loginDto = new LoginDto
+            {
+                Email = "test@example.com",
+                Password = "WrongPassword!"
+            };
+
+            // Act
+            var result = await _sut.GetTokenAsync(loginDto);
+
+            // Assert
+            Assert.False(result.IsAuthenticated);
+            Assert.Equal("Invalid email or password!", result.Message);
+        }
+
+        [Fact]
+        //Login with valid credentials and user has active refresh token
+        public async Task GetTokenAsync_WhenUserHasActiveRefreshToken_ReturnsSameRefreshToken()
+        {
+            // Arrange
+            var user = new Appuser
+            {
+                UserName = "testuser",
+                Email = "test@example.com",
+                FirstName = "John",
+                LastName = "Doe",
+                RefreshTokens = new List<RefreshToken>
+            {
+                new RefreshToken { Token = "existing_refresh_token", ExpiresOn = DateTime.UtcNow.AddDays(7), RevokedOn = null }
+            }
+            };
+
+            await _userManager.CreateAsync(user, "Secure@123");
+            await _userManager.AddToRoleAsync(user, "Trainer");
+
+            var loginDto = new LoginDto
+            {
+                Email = "test@example.com",
+                Password = "Secure@123"
+            };
+
+            // Act
+            var result = await _sut.GetTokenAsync(loginDto);
+
+            // Assert
+            Assert.Equal("existing_refresh_token", result.RefreshToken);
+            Assert.True(result.RefreshTokenExpiration > DateTime.UtcNow);
+        }
+
+        [Fact]
+        //Login with valid credentials and user has no active refresh tokens
+        public async Task GetTokenAsync_WhenUserHasNoActiveRefreshToken_GeneratesNewRefreshToken()
+        {
+            // Arrange
+            var user = new Appuser
+            {
+                UserName = "testuser",
+                Email = "test@example.com",
+                FirstName = "John",
+                LastName = "Doe",
+                RefreshTokens = new List<RefreshToken>() // No active refresh token
+            };
+
+            await _userManager.CreateAsync(user, "Secure@123");
+            await _userManager.AddToRoleAsync(user, "Trainer");
+
+            var loginDto = new LoginDto
+            {
+                Email = "test@example.com",
+                Password = "Secure@123"
+            };
+
+            // Act
+            var result = await _sut.GetTokenAsync(loginDto);
+
+            // Assert
+            Assert.NotNull(result.RefreshToken);
+            Assert.True(result.RefreshTokenExpiration > DateTime.UtcNow);
+        }
     }
 }
