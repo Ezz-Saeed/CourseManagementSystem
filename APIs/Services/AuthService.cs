@@ -14,15 +14,19 @@ using System.Text;
 namespace APIs.Services
 {
     public class AuthService(UserManager<Appuser> userManager,
-        IOptions<JWT> jwtOptions, RoleManager<IdentityRole> roleManager) : IAuthService
+        IOptions<JWT> jwtOptions) : IAuthService
     {
         private readonly JWT jwt = jwtOptions.Value;
 
+        // A method service to register new app user with trainer role
         public async Task<AuthDto> RegisterAsync(RegisterDto model)
         {
+            // Registered account
             if (await userManager.FindByEmailAsync(model.Email) is not null ||
                 await userManager.FindByNameAsync(model.UserName) is not null)
                 return new AuthDto { Message = "Already registered account!" };
+
+            // Create new app user
             var user = new Appuser
             {
                 UserName = model.UserName,
@@ -31,6 +35,7 @@ namespace APIs.Services
                 LastName = model.LastName,
             };
 
+            // User registeration succeeded
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
             {
@@ -40,13 +45,13 @@ namespace APIs.Services
                 return new AuthDto { Message = errors };
             }
 
-            await userManager.AddToRoleAsync(user, "User");
+            await userManager.AddToRoleAsync(user, "Trainer");
             var token = await GenerateToken(user);
             return new AuthDto
             {
                 Email = user.Email,
                 Username = user.Email,
-                Roles = new List<string> { "User" },
+                Roles = new List<string> { "Trainer" },
                 IsAuthenticated = true,
                 Token = new JwtSecurityTokenHandler().WriteToken(token),
                 ExpiresOn = token.ValidTo,
@@ -56,9 +61,10 @@ namespace APIs.Services
 
         }
 
-
+        // A method to get JWT token so that user is authenticated
         public async Task<AuthDto> GetTokenAsync(LoginDto model)
         {
+            // Unauthenticated user
             var authModel = new AuthDto();
             var user = await userManager.FindByEmailAsync(model.Email);
             if (user is null || !await userManager.CheckPasswordAsync(user, model.Password))
@@ -78,12 +84,14 @@ namespace APIs.Services
             authModel.LastName = user.LastName;
             authModel.IsAuthenticated = true;
 
+            // Check for active refresh token
             if (user.RefreshTokens.Any(t => t.IsActive))
             {
                 var activeRefreshToken = user.RefreshTokens.FirstOrDefault(t => t.IsActive);
                 authModel.RefreshToken = activeRefreshToken.Token;
                 authModel.RefreshTokenExpiration = activeRefreshToken.ExpiresOn;
             }
+            // If not generate new one
             else
             {
                 var refreshToken = GenerateRefreshToken();
@@ -96,7 +104,7 @@ namespace APIs.Services
             return authModel;
         }
 
-
+        // Refresh expired jwt token
         public async Task<AuthDto> RefreshTokenAsync(string refreshToken)
         {
             var authModel = new AuthDto();
@@ -107,6 +115,7 @@ namespace APIs.Services
                 authModel.Message = "Invalid refresh token!";
                 return authModel;
             }
+            // Fetch an active refresh token
             var activeRefreshToken = user.RefreshTokens.Single(rt => rt.Token == refreshToken);
 
             if (!activeRefreshToken.IsActive)
@@ -114,11 +123,13 @@ namespace APIs.Services
                 authModel.Message = "Inactive refresh token!";
                 return authModel;
             }
+            // Revoke cuurent refresh token to generate new active one
             activeRefreshToken.RevokedOn = DateTime.UtcNow;
             var newRefreshToken = GenerateRefreshToken();
             user.RefreshTokens.Add(newRefreshToken);
             await userManager.UpdateAsync(user);
 
+            // Generate new JWT token
             var jwtToken = await GenerateToken(user);
             var roles = await userManager.GetRolesAsync(user);
             authModel.Email = user.Email;
@@ -131,16 +142,18 @@ namespace APIs.Services
             return authModel;
         }
 
-        public async Task<Appuser> LoadCurrentUser(string userId)
-        {
-            if (string.IsNullOrEmpty(userId)) return null!;
-            var user = await userManager.FindByIdAsync(userId);
-            if (user is null) return null!;
-            return user;
-        }
+        //public async Task<Appuser> LoadCurrentUser(string userId)
+        //{
+        //    if (string.IsNullOrEmpty(userId)) return null!;
+        //    var user = await userManager.FindByIdAsync(userId);
+        //    if (user is null) return null!;
+        //    return user;
+        //}
 
+        // Method to generate JWT token object for app user
         public async Task<JwtSecurityToken> GenerateToken(Appuser appUser)
         {
+            // Extracting roles and claims of app user
             var userClaims = await userManager.GetClaimsAsync(appUser);
             var roles = await userManager.GetRolesAsync(appUser);
             var roleClaims = new List<Claim>();
@@ -149,6 +162,7 @@ namespace APIs.Services
                 roleClaims.Add(new Claim("roles", role));
             }
 
+            // Claims for user
             var claims = new List<Claim>()
             {
                 new Claim(JwtRegisteredClaimNames.UniqueName, appUser.UserName!),
@@ -160,16 +174,17 @@ namespace APIs.Services
             var signinKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key));
             var signinCredentials = new SigningCredentials(signinKey, SecurityAlgorithms.HmacSha256);
 
+            // Token generation
             return new JwtSecurityToken(
                     issuer: jwt.Issuer,
                     audience: jwt.Audience,
-            claims: claims,
+                    claims: claims,
                     signingCredentials: signinCredentials,
                     expires: DateTime.Now.AddDays(jwt.DurationInMinutes)
                 );
         }
 
-
+        // Method to generate RefreshToken object
         private RefreshToken GenerateRefreshToken()
         {
             var randomNumber = new byte[32];
