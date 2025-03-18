@@ -1,5 +1,6 @@
 
 using APIs.Data;
+using APIs.Helpers;
 using APIs.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +27,8 @@ namespace APIs
             {
                 options.UseSqlServer(connection);
             });
+
+            builder.Services.Configure<JWT>(builder.Configuration.GetSection("JWT"));
 
             var app = builder.Build();
 
