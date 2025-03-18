@@ -1,5 +1,6 @@
 
 using APIs.Data;
+using APIs.Extensions;
 using APIs.Helpers;
 using APIs.Models;
 using Microsoft.AspNetCore.Identity;
@@ -30,6 +31,7 @@ namespace APIs
 
             builder.Services.Configure<JWT>(builder.Configuration.GetSection("JWT"));
 
+            builder.Services.AddIdentityServices(builder.Configuration);
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.
