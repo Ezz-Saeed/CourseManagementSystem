@@ -8,5 +8,6 @@ namespace APIs.Models
         public string LastName { get; set; }
         public bool IsApproved { get; set; }
         public virtual ICollection<Course>? Courses { get; set; }
+        public virtual ICollection<RefreshToken>? RefreshTokens { get; set; }
     }
 }
