@@ -7,6 +7,7 @@ using CourseManagementSystem.Tests.Data;
 using FakeItEasy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using Moq;
 
 namespace CourseManagementSystem.Tests
 {
@@ -271,5 +272,114 @@ namespace CourseManagementSystem.Tests
             Assert.NotNull(result.RefreshToken);
             Assert.True(result.RefreshTokenExpiration > DateTime.UtcNow);
         }
+
+
+        [Fact]
+        // Trying Update trainer with no authority
+        public async Task UpdateTrainerAsync_WhenUserNotFound_ReturnsUnauthorized()
+        {
+            // Arrange
+            var dto = new UpdateTrainerDto
+            {
+                UserName = "newUser",
+                Email = "newuser@example.com",
+                FirstName = "Alice",
+                LastName = "Smith"
+            };
+            var invalidUserId = "non_existent_id";
+
+            // Act
+            var result = await _sut.UpdateTrainerAsync(dto, invalidUserId);
+
+            // Assert
+            Assert.Equal(401, result.StatusCode);
+            Assert.Equal("Unauthorized user!", result.Message);
+        }
+
+
+        [Fact]
+        // Successfully update trainer info
+        public async Task UpdateTrainerAsync_WhenUserIsUpdatedSuccessfully_ReturnsSuccess()
+        {
+            // Arrange
+            var user = new Appuser
+            {
+                Id = "existing_id",
+                UserName = "oldUser",
+                Email = "oldemail@example.com",
+                FirstName = "John",
+                LastName = "Doe"
+            };
+            // Mock user manager with succeed identity result on update
+            var userManagerMock = new Mock<UserManager<Appuser>>(
+                Mock.Of<IUserStore<Appuser>>(), null, null, null, null, null, null, null, null
+            );
+
+            userManagerMock.Setup(x => x.FindByIdAsync("existing_id")).ReturnsAsync(user);
+            userManagerMock.Setup(x => x.UpdateAsync(user)).ReturnsAsync(IdentityResult.Success);
+
+            var dto = new UpdateTrainerDto
+            {
+                UserName = "newUser",
+                Email = "newemail@example.com",
+                FirstName = "Alice",
+                LastName = "Smith"
+            };
+
+            var authService = new AuthService(userManagerMock.Object, _jwtOptions);
+
+            // Act
+            var result = await authService.UpdateTrainerAsync(dto, "existing_id");
+
+            // Assert
+            Assert.Equal(200, result.StatusCode);
+            Assert.Equal(dto.UserName, user.UserName);
+            Assert.Equal(dto.Email, user.Email);
+            Assert.Equal(dto.FirstName, user.FirstName);
+            Assert.Equal(dto.LastName, user.LastName);
+        }
+
+
+        [Fact]
+        // Update fails
+        public async Task UpdateTrainerAsync_WhenUpdateFails_ReturnsBadRequest()
+        {
+            // Arrange
+            var user = new Appuser
+            {
+                Id = "existing_id",
+                UserName = "oldUser",
+                Email = "oldemail@example.com",
+                FirstName = "John",
+                LastName = "Doe"
+            };
+
+            // Mock user manager with filed identity result on update
+            var userManagerMock = new Mock<UserManager<Appuser>>(
+                            Mock.Of<IUserStore<Appuser>>(), null, null, null, null, null, null, null, null
+                        );
+
+            userManagerMock.Setup(x => x.FindByIdAsync("existing_id")).ReturnsAsync(user);
+            userManagerMock.Setup(x => x.UpdateAsync(user))
+                .ReturnsAsync(IdentityResult.Failed(new IdentityError { Description = "Update failed" }));
+
+            var dto = new UpdateTrainerDto
+            {
+                UserName = "newUser",
+                Email = "newemail@example.com",
+                FirstName = "Alice",
+                LastName = "Smith"
+            };
+
+            var authService = new AuthService(userManagerMock.Object, _jwtOptions);
+
+            // Act
+            var result = await authService.UpdateTrainerAsync(dto, "existing_id");
+
+            // Assert
+            Assert.Equal(400, result.StatusCode);
+            Assert.Contains("Update failed", result.Message);
+        }
+
     }
 }
