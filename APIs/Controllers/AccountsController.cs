@@ -67,6 +67,15 @@ namespace APIs.Controllers
             return Ok(result);
         }
 
+        [Authorize(Roles = "Trainer")]
+        [HttpPut("deleteTrainer")]
+        public async Task<IActionResult> DeleteTrainer()
+        {
+            var id = User.GetUserId();
+            var result = await authenticationService.DeleteTrainerAsync(id);
+            return Ok(result);
+        }
+
         private void SetRefreshTokenInCookie(string refreshToken, DateTime expires)
         {
             var cookieOptions = new CookieOptions

@@ -12,5 +12,6 @@ namespace APIs.Interfaces
         //Task<AppUser> LoadCurrentUser(string userId);
         Task<JwtSecurityToken> GenerateToken(Appuser appUser);
         Task<ResponseDto> UpdateTrainerAsync(UpdateTrainerDto dto, string id);
+        Task<ResponseDto> DeleteTrainerAsync(string id);
     }
 }

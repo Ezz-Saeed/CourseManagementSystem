@@ -182,6 +182,35 @@ namespace APIs.Services
             return result;
         }
 
+
+        public async Task<ResponseDto> DeleteTrainerAsync(string id)
+        {
+            var result = new ResponseDto();
+            var user = await userManager.FindByIdAsync(id);
+            // Check for unoauthorized user
+            if (user is null)
+            {
+                result.StatusCode = 401;
+                result.Message = "Unauthorized user!";
+                return result;
+            }
+            
+            user.IsDeleted = true;
+            var updateResult = await userManager.UpdateAsync(user);
+
+            // Check for update errors
+            if (!updateResult.Succeeded)
+            {
+                result.StatusCode = 400;
+                result.Message = $"{string.Join(", ", updateResult.Errors.Select(e => e.Description))}";
+                return result;
+            }
+            result.StatusCode = 200;
+            result.Message = "Triner deleted successfully";
+
+            return result;
+        }
+
         // Method to generate JWT token object for app user
         public async Task<JwtSecurityToken> GenerateToken(Appuser appUser)
         {
