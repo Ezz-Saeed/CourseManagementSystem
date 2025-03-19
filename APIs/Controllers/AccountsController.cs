@@ -1,5 +1,7 @@
-﻿using APIs.DTOs;
+﻿using API.Extensions;
+using APIs.DTOs;
 using APIs.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -47,7 +49,21 @@ namespace APIs.Controllers
 
             if (!result.IsAuthenticated)
                 return Unauthorized(result.Message);
-            SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
+            SetRefreshTokenInCookie(result.RefreshToken!, result.RefreshTokenExpiration);
+            return Ok(result);
+        }
+
+        [Authorize(Roles = "Trainer")]
+        [HttpPut("updateTrainer")]
+        public async Task<IActionResult> UpdateTrainer(UpdateTrainerDto dto)
+        {
+            var id = User.GetUserId();
+            var result =await authenticationService.UpdateTrainerAsync(dto, id);
+            if (result.StatusCode == 401)
+                return Unauthorized(result);
+            if (result.StatusCode == 400)
+                return BadRequest(result);
+            
             return Ok(result);
         }
 

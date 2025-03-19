@@ -142,6 +142,45 @@ namespace APIs.Services
             return authModel;
         }
 
+        // Edit trainer account
+        public async Task<ResponseDto> UpdateTrainerAsync(UpdateTrainerDto dto, string id)
+        {
+            var result = new ResponseDto();
+            var user = await userManager.FindByIdAsync(id);
+            // Check for unoauthorized user
+            if(user is null)
+            {
+                result.StatusCode = 401;
+                result.Message = "Unauthorized user!";
+                return result;
+            }
+
+            // Check for new info to be updated
+            if(!string.IsNullOrEmpty(dto.UserName))
+                user.UserName = dto.UserName;
+
+            if (!string.IsNullOrEmpty(dto.Email))
+                user.Email = dto.Email;
+
+            if (!string.IsNullOrEmpty(dto.FirstName))
+                user.FirstName = dto.FirstName;
+
+            if (!string.IsNullOrEmpty(dto.LastName))
+                user.LastName = dto.LastName;
+
+            var updateResult = await userManager.UpdateAsync(user!);
+            // Check for update errors
+            if(!updateResult.Succeeded)
+            {
+                result.StatusCode = 400;
+                result.Message = $"{string.Join(", ", updateResult.Errors.Select(e=>e.Description))}";
+                return result;
+            }
+            result.StatusCode = 200;
+            result.Message = "Triner info updated successfully";
+
+            return result;
+        }
 
         // Method to generate JWT token object for app user
         public async Task<JwtSecurityToken> GenerateToken(Appuser appUser)

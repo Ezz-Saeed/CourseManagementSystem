@@ -11,5 +11,6 @@ namespace APIs.Interfaces
         Task<AuthDto> RefreshTokenAsync(string refreshToken);
         //Task<AppUser> LoadCurrentUser(string userId);
         Task<JwtSecurityToken> GenerateToken(Appuser appUser);
+        Task<ResponseDto> UpdateTrainerAsync(UpdateTrainerDto dto, string id);
     }
 }
