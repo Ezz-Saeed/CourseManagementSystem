@@ -16,7 +16,7 @@ namespace APIs.Controllers
 
             var result = await authenticationService.RegisterAsync(model);
 
-            if (!result.IsAuthenticated) return BadRequest(result);
+            if (!result.IsAuthenticated) return Unauthorized(result);
             if (!string.IsNullOrEmpty(result.RefreshToken))
                 SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
 
@@ -29,7 +29,7 @@ namespace APIs.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var result = await authenticationService.GetTokenAsync(model);
-            if (!result.IsAuthenticated) return Ok(result);
+            if (!result.IsAuthenticated) return Unauthorized(result);
 
             if (!string.IsNullOrEmpty(result.RefreshToken))
                 SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
@@ -41,10 +41,12 @@ namespace APIs.Controllers
         public async Task<IActionResult> RefreshToken()
         {
             var refreshToken = Request.Cookies["refreshToken"];
+            if(string.IsNullOrEmpty(refreshToken))
+                return Unauthorized();
             var result = await authenticationService.RefreshTokenAsync(refreshToken);
 
             if (!result.IsAuthenticated)
-                return BadRequest(result.Message);
+                return Unauthorized(result.Message);
             SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
             return Ok(result);
         }

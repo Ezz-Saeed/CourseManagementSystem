@@ -142,13 +142,6 @@ namespace APIs.Services
             return authModel;
         }
 
-        //public async Task<Appuser> LoadCurrentUser(string userId)
-        //{
-        //    if (string.IsNullOrEmpty(userId)) return null!;
-        //    var user = await userManager.FindByIdAsync(userId);
-        //    if (user is null) return null!;
-        //    return user;
-        //}
 
         // Method to generate JWT token object for app user
         public async Task<JwtSecurityToken> GenerateToken(Appuser appUser)
