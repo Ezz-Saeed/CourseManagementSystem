@@ -261,5 +261,50 @@ namespace CourseManagementSystem.Tests
             Assert.Equal(course.Description, updatedCourse.Description); 
         }
 
+
+        // Delete endppoint
+        [Fact]
+        // Deleting existing course
+        public async Task DeleteCourse_WhenCourseExists_ReturnsOk()
+        {
+            // Arrange
+            var course = new Course
+            {
+                Name = "Test Course",
+                Description = "Sample Description",
+                StartDate = DateTime.Now.AddMonths(-2),
+                EndDate = DateTime.Now.AddMonths(2),
+                IsDeleted = false
+            };
+
+            await _appDbContext.Courses.AddAsync(course);
+            await _appDbContext.SaveChangesAsync();
+
+            // Act
+            var result = await _coursesController.DeleteCourse(course.Id);
+
+            // Assert
+            var okResult = Assert.IsType<OkResult>(result);
+            Assert.Equal(200, okResult.StatusCode);
+
+            var deletedCourse = await _appDbContext.Courses.FindAsync(course.Id);
+            Assert.NotNull(deletedCourse);
+            // Ensure course is marked as deleted
+            Assert.True(deletedCourse.IsDeleted); 
+        }
+
+
+        [Fact]
+        // Trying to delete non existing cousrse
+        public async Task DeleteCourse_WhenCourseDoesNotExist_ReturnsNotFound()
+        {
+            // Act
+            var result = await _coursesController.DeleteCourse(999); // Non-existent ID
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundResult>(result);
+            Assert.Equal(404, notFoundResult.StatusCode);
+        }
+
     }
 }

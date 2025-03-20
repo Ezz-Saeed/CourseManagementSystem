@@ -46,6 +46,16 @@ namespace APIs.Controllers
             return Ok(updatedCourse);
         }
 
+        [HttpPut("deleteCpurse/{id}")]
+        public async Task<IActionResult> DeleteCourse(int id)
+        {
+            var course = await context.Courses.FindAsync(id);
+            if(course is null) return NotFound();
 
+            course.IsDeleted = true;
+            context.Courses.Update(course);
+            await context.SaveChangesAsync();
+            return Ok();
+        }
     }
 }
