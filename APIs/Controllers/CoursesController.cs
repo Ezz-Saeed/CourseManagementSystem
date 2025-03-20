@@ -23,5 +23,27 @@ namespace APIs.Controllers
             var createdCourse = mapper.Map<GetCourseDto>(course);
             return Ok(createdCourse);
         }
+
+        [HttpPut("updateCourse/{id}")]
+        public async Task<IActionResult> UpdateCourse(int id, UpdateCourseDto dto)
+        {
+            var course = await context.Courses.FindAsync(id);
+            if(course is null) return NotFound();
+
+            if(!string.IsNullOrEmpty(dto.Name))
+                course.Name = dto.Name;
+            if (!string.IsNullOrEmpty(dto.Description))
+                course.Description = dto.Description;
+            if (dto.StartDate is not null)
+                course.StartDate = (DateTime) dto.StartDate;
+            if (dto.EndDate is not null)
+                course.EndDate = (DateTime) dto.EndDate;
+
+            context.Update(course);
+            var result = await context.SaveChangesAsync();
+            if (result <= 0) return BadRequest("Couldn't update course");
+            var updatedCourse = mapper.Map<GetCourseDto>(course);
+            return Ok(updatedCourse);
+        }
     }
 }
