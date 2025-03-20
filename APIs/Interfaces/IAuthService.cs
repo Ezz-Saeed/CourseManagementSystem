@@ -1,4 +1,5 @@
 ﻿using APIs.DTOs;
+using APIs.DTOs.TrainerDtos;
 using APIs.Models;
 using System.IdentityModel.Tokens.Jwt;
 
@@ -13,5 +14,6 @@ namespace APIs.Interfaces
         Task<JwtSecurityToken> GenerateToken(Appuser appUser);
         Task<ResponseDto> UpdateTrainerAsync(UpdateTrainerDto dto, string id);
         Task<ResponseDto> DeleteTrainerAsync(string id);
+        Task<List<GetTrainerDto>> GetTrainersAsync();
     }
 }

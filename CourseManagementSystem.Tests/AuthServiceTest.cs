@@ -3,6 +3,7 @@ using APIs.DTOs;
 using APIs.Helpers;
 using APIs.Models;
 using APIs.Services;
+using AutoMapper;
 using CourseManagementSystem.Tests.Data;
 using FakeItEasy;
 using Microsoft.AspNetCore.Identity;
@@ -17,13 +18,14 @@ namespace CourseManagementSystem.Tests
         private readonly IOptions<JWT> _jwtOptions;
         private readonly AuthService _sut;
         private readonly AppDbContext _appDbContext;
+        private readonly IMapper _mapper;
 
         public AuthServiceTest()
         {
             // Fake dependencies
             _appDbContext = DbContextInMemory.GetInMemoryDbContext();
             _userManager = UserManagerInMemory.GetInMemoryUserManager(_appDbContext);
-
+            _mapper = A.Fake<IMapper>();
             var jwtSettings = new JWT
             {
                 Key = "ThisIsASecretKeyForTestingPurposes123456",
@@ -34,7 +36,7 @@ namespace CourseManagementSystem.Tests
             _jwtOptions = Options.Create(jwtSettings);
 
 
-            _sut = new AuthService(_userManager, _jwtOptions);
+            _sut = new AuthService(_userManager, _jwtOptions, _mapper);
         }
 
         
@@ -326,7 +328,7 @@ namespace CourseManagementSystem.Tests
                 LastName = "Smith"
             };
 
-            var authService = new AuthService(userManagerMock.Object, _jwtOptions);
+            var authService = new AuthService(userManagerMock.Object, _jwtOptions, _mapper);
 
             // Act
             var result = await authService.UpdateTrainerAsync(dto, "existing_id");
@@ -371,7 +373,7 @@ namespace CourseManagementSystem.Tests
                 LastName = "Smith"
             };
 
-            var authService = new AuthService(userManagerMock.Object, _jwtOptions);
+            var authService = new AuthService(userManagerMock.Object, _jwtOptions, _mapper);
 
             // Act
             var result = await authService.UpdateTrainerAsync(dto, "existing_id");

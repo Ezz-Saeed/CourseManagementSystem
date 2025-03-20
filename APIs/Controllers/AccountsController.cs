@@ -11,6 +11,13 @@ namespace APIs.Controllers
     [ApiController]
     public class AccountsController(IAuthService authenticationService) : ControllerBase
     {
+        [HttpGet("getTrainers")]
+        public async Task<IActionResult> GetTrainers()
+        {
+            var trainers = await authenticationService.GetTrainersAsync();
+            return Ok(trainers);
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto model)
         {

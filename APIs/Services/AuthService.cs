@@ -1,7 +1,9 @@
 ﻿using APIs.DTOs;
+using APIs.DTOs.TrainerDtos;
 using APIs.Helpers;
 using APIs.Interfaces;
 using APIs.Models;
+using AutoMapper;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -14,7 +16,7 @@ using System.Text;
 namespace APIs.Services
 {
     public class AuthService(UserManager<Appuser> userManager,
-        IOptions<JWT> jwtOptions) : IAuthService
+        IOptions<JWT> jwtOptions, IMapper mapper) : IAuthService
     {
         private readonly JWT jwt = jwtOptions.Value;
 
@@ -141,6 +143,14 @@ namespace APIs.Services
             authModel.RefreshTokenExpiration = newRefreshToken.ExpiresOn;
             return authModel;
         }
+
+        public async Task<List<GetTrainerDto>> GetTrainersAsync()
+        {
+            var trainers = await userManager.Users.Where(u=>!u.IsDeleted).ToListAsync();
+            var returnedTrainers = mapper.Map<List<GetTrainerDto>>(trainers);
+            return returnedTrainers;
+        }
+
 
         // Edit trainer account
         public async Task<ResponseDto> UpdateTrainerAsync(UpdateTrainerDto dto, string id)
