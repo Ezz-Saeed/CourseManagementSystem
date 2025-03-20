@@ -27,6 +27,8 @@ namespace CourseManagementSystem.Tests
             _coursesController = new CoursesController(_appDbContext, _mapper);
         }
 
+        // Add Course
+
         [Fact]
         // Succefully Adding course
         public async Task AddCourse_WhenCourseIsAddedSuccessfully_ReturnsOk()
@@ -106,5 +108,158 @@ namespace CourseManagementSystem.Tests
             // Assert
             Assert.Equal(400, result!.StatusCode);
         }
+
+
+        // Update course
+        [Fact]
+        // Successfull update
+        public async Task UpdateCourse_WhenCourseExists_ReturnsOk()
+        {
+            // Arrange
+            var course = new Course
+            {
+                Name = "Old Course",
+                Description = "Old Description",
+                StartDate = DateTime.Now.AddMonths(-2),
+                EndDate = DateTime.Now.AddMonths(2)
+            };
+
+            await _appDbContext.Courses.AddAsync(course);
+            await _appDbContext.SaveChangesAsync();
+
+            var dto = new UpdateCourseDto
+            {
+                Name = "Updated Course",
+                Description = "Updated Description",
+                StartDate = DateTime.Now,
+                EndDate = DateTime.Now.AddMonths(3)
+            };
+
+            var expectedDto = new GetCourseDto { Name = dto.Name, Description = dto.Description,
+                StartDate = (DateTime) dto.StartDate, EndDate = (DateTime) dto.EndDate};
+            A.CallTo(() => _mapper.Map<GetCourseDto>(course)).Returns(expectedDto);
+
+            // Act
+            var result = await _coursesController.UpdateCourse(course.Id, dto);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(200, okResult.StatusCode);
+
+            var updatedCourse = okResult.Value as GetCourseDto;
+            Assert.NotNull(updatedCourse);
+            Assert.Equal(dto.Name, updatedCourse.Name);
+            Assert.Equal(dto.Description, updatedCourse.Description);
+        }
+
+        [Fact]
+        // Trying to update non existing entity
+        public async Task UpdateCourse_WhenCourseDoesNotExist_ReturnsNotFound()
+        {
+            // Arrange
+            var dto = new UpdateCourseDto
+            {
+                Name = "Updated Course",
+                Description = "Updated Description",
+                StartDate = DateTime.Now,
+                EndDate = DateTime.Now.AddMonths(3)
+            };
+
+            // Act
+            var result = await _coursesController.UpdateCourse(999, dto); // Non-existent ID
+
+            // Assert
+            var notFoundResult = Assert.IsType<NotFoundResult>(result);
+            Assert.Equal(404, notFoundResult.StatusCode);
+        }
+
+
+        [Fact]
+        // No changes
+        public async Task UpdateCourse_WhenDtoHasNoChanges_ReturnsSameCourse()
+        {
+            // Arrange
+            var course = new Course
+            {
+                Name = "Same Course",
+                Description = "Same Description",
+                StartDate = DateTime.Now.AddMonths(-2),
+                EndDate = DateTime.Now.AddMonths(2)
+            };
+
+            await _appDbContext.Courses.AddAsync(course);
+            await _appDbContext.SaveChangesAsync();
+
+            var dto = new UpdateCourseDto(); // Empty DTO means no changes
+
+            var expectedDto = new GetCourseDto
+            {
+                Name = course.Name,
+                Description = course.Description,
+                StartDate = course.StartDate,
+                EndDate = course.EndDate
+            };
+
+            A.CallTo(() => _mapper.Map<GetCourseDto>(course)).Returns(expectedDto);
+
+            // Act
+            var result = await _coursesController.UpdateCourse(course.Id, dto);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(200, okResult.StatusCode);
+
+            var updatedCourse = okResult.Value as GetCourseDto;
+            Assert.NotNull(updatedCourse);
+            Assert.Equal(course.Name, updatedCourse.Name);
+            Assert.Equal(course.Description, updatedCourse.Description);
+        }
+
+
+        [Fact]
+        // Partially Update course entity
+        public async Task UpdateCourse_WhenPartialUpdateSent_UpdatesOnlySpecifiedFields()
+        {
+            // Arrange
+            var course = new Course
+            {
+                Name = "Initial Name",
+                Description = "Initial Description",
+                StartDate = DateTime.Now.AddMonths(-2),
+                EndDate = DateTime.Now.AddMonths(2)
+            };
+
+            await _appDbContext.Courses.AddAsync(course);
+            await _appDbContext.SaveChangesAsync();
+
+            var dto = new UpdateCourseDto
+            {
+                Name = "Updated Name" // Only updating Name field
+            };
+
+            var expectedDto = new GetCourseDto
+            {
+                Name = dto.Name,
+                Description = course.Description, // Should remain unchanged
+                StartDate = course.StartDate,
+                EndDate = course.EndDate
+            };
+
+            A.CallTo(() => _mapper.Map<GetCourseDto>(course)).Returns(expectedDto);
+
+            // Act
+            var result = await _coursesController.UpdateCourse(course.Id, dto);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(200, okResult.StatusCode);
+
+            var updatedCourse = okResult.Value as GetCourseDto;
+            Assert.NotNull(updatedCourse);
+            Assert.Equal(dto.Name, updatedCourse.Name);
+            // Remains unchanged
+            Assert.Equal(course.Description, updatedCourse.Description); 
+        }
+
     }
 }

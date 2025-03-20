@@ -45,5 +45,7 @@ namespace APIs.Controllers
             var updatedCourse = mapper.Map<GetCourseDto>(course);
             return Ok(updatedCourse);
         }
+
+
     }
 }
