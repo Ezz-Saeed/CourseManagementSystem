@@ -1,8 +1,10 @@
 ﻿using APIs.Data;
 using APIs.DTOs.CourseDtos;
+using APIs.DTOs.TrainerDtos;
 using APIs.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -10,7 +12,7 @@ namespace APIs.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class CoursesController(AppDbContext context, IMapper mapper) : ControllerBase
+    public class CoursesController(AppDbContext context, IMapper mapper, UserManager<Appuser> userManager) : ControllerBase
     {
 
         [HttpGet("GetCourses")]
@@ -66,6 +68,23 @@ namespace APIs.Controllers
             context.Courses.Update(course);
             await context.SaveChangesAsync();
             return Ok();
+        }
+
+        [HttpPut("assignCourseToTrainer")]
+        public async Task<IActionResult> AssignCourseToTrainer(AssignCourseToTrainerDto dto)
+        {
+            var course = await context.Courses.FindAsync(dto.CourseId);
+            if (course is null) return BadRequest();
+            var trainer = await userManager.FindByEmailAsync(dto.TrainerEmail);
+            if (trainer is null) return BadRequest();
+
+            trainer.Courses!.Add(course);
+            var result = await userManager.UpdateAsync(trainer);
+
+            if (!result.Succeeded) return BadRequest($"{string.Join(", ", result.Errors.Select(e=>e.Description))}");
+
+            var updatedTrainer = mapper.Map<GetTrainerDto>(trainer);
+            return Ok(updatedTrainer);
         }
     }
 }

@@ -5,6 +5,7 @@ using APIs.Models;
 using AutoMapper;
 using CourseManagementSystem.Tests.Data;
 using FakeItEasy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -19,12 +20,14 @@ namespace CourseManagementSystem.Tests
         private readonly AppDbContext _appDbContext;
         private readonly CoursesController _coursesController;
         private readonly IMapper _mapper;
+        private readonly UserManager<Appuser> _userManager;
 
         public CoursesControllerTest()
         {
             _appDbContext = DbContextInMemory.GetInMemoryDbContext();
+            _userManager = UserManagerInMemory.GetInMemoryUserManager(_appDbContext);
             _mapper = A.Fake<IMapper>();
-            _coursesController = new CoursesController(_appDbContext, _mapper);
+            _coursesController = new CoursesController(_appDbContext, _mapper, _userManager);
         }
 
         // Add Course
