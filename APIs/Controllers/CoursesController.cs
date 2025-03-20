@@ -4,6 +4,7 @@ using APIs.Models;
 using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace APIs.Controllers
 {
@@ -11,6 +12,15 @@ namespace APIs.Controllers
     [ApiController]
     public class CoursesController(AppDbContext context, IMapper mapper) : ControllerBase
     {
+
+        [HttpGet("GetCourses")]
+        public async Task<IActionResult> GetCourses()
+        {
+            var courses = await context.Courses.Where(c=>!c.IsDeleted).ToListAsync();
+            var coursesToReturn = mapper.Map<List<GetCourseDto>>(courses);
+            return Ok(coursesToReturn);
+        }
+
         [HttpPost("addCourse")]
         public async Task<IActionResult> AddCourse(AddCourseDto dto)
         {

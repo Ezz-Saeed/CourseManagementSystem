@@ -17,6 +17,6 @@ namespace APIs.Models
         public bool IsDeleted { get; set; }
         [ForeignKey(nameof(Trainer))]
         public string? TrainerId { get; set; }
-        public virtual Trainer? Trainer { get; set; }
+        public virtual Appuser? Trainer { get; set; }
     }
 }

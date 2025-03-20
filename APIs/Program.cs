@@ -25,7 +25,7 @@ namespace APIs
                 throw new NullReferenceException("connection couldn't be found");
             builder.Services.AddDbContext<AppDbContext>(options =>
             {
-                options.UseSqlServer(connection);
+                options.UseLazyLoadingProxies().UseSqlServer(connection);
             });
             builder.Services.AddScoped<IAuthService, AuthService>();
             builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);

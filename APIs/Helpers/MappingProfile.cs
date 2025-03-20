@@ -10,9 +10,10 @@ namespace APIs.Helpers
         {
             CreateMap<AddCourseDto, Course>();
             CreateMap<Course, GetCourseDto>()
-                .ForMember(d=>d.TrainerFirstName, opt=>opt.MapFrom(s=>s.Trainer.FirstName))
-                .ForMember(d => d.TrainerLastName, opt => opt.MapFrom(s => s.Trainer.LastName))
-                .ForMember(d => d.TrainerEmail, opt => opt.MapFrom(s => s.Trainer.Email));
+                .ForMember(d=>d.TrainerFirstName, opt=>opt.MapFrom(s=>s.Trainer!.FirstName))
+                .ForMember(d => d.TrainerLastName, opt => opt.MapFrom(s => s.Trainer!.LastName))
+                .ForMember(d => d.TrainerEmail, opt => opt.MapFrom(s => s.Trainer!.Email))
+                .ForMember(d => d.TrainerUserName, opt => opt.MapFrom(s => s.Trainer!.UserName));
         }
     }
 }
