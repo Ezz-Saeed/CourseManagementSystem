@@ -14,6 +14,7 @@ namespace APIs.Data
         }
 
         public virtual DbSet<Course> Courses { get; set; }
+        public virtual DbSet<TrainerPayment> TrainerPayments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder builder)
         {

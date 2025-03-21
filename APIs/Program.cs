@@ -28,8 +28,10 @@ namespace APIs
                 options.UseLazyLoadingProxies().UseSqlServer(connection);
             });
             builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IPayPalPaymentService, PayPalPaymentService>();
             builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
             builder.Services.Configure<JWT>(builder.Configuration.GetSection("JWT"));
+            builder.Services.Configure<PaypalCredentials>(builder.Configuration.GetSection("Paypal"));
 
             builder.Services.AddIdentityServices(builder.Configuration);
             builder.Services.AddSwagerService();
