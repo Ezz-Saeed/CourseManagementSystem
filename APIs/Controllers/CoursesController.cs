@@ -1,8 +1,10 @@
 ﻿using APIs.Data;
+using APIs.DTOs;
 using APIs.DTOs.CourseDtos;
 using APIs.DTOs.TrainerDtos;
 using APIs.Models;
 using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -12,10 +14,13 @@ namespace APIs.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles ="Admin")]
     public class CoursesController(AppDbContext context, IMapper mapper, UserManager<Appuser> userManager) : ControllerBase
     {
 
         [HttpGet("GetCourses")]
+        [AllowAnonymous]
+        [ProducesResponseType(typeof(List<GetCourseDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetCourses()
         {
             var courses = await context.Courses.Where(c=>!c.IsDeleted).ToListAsync();
@@ -24,6 +29,9 @@ namespace APIs.Controllers
         }
 
         [HttpPost("addCourse")]
+        [ProducesResponseType(typeof(GetCourseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AddCourseDto), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> AddCourse(AddCourseDto dto)
         {
             if(!ModelState.IsValid) return BadRequest(ModelState);
@@ -37,6 +45,8 @@ namespace APIs.Controllers
         }
 
         [HttpPut("updateCourse/{id}")]
+        [ProducesResponseType(typeof(GetCourseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> UpdateCourse(int id, UpdateCourseDto dto)
         {
             var course = await context.Courses.FindAsync(id);
@@ -58,7 +68,9 @@ namespace APIs.Controllers
             return Ok(updatedCourse);
         }
 
-        [HttpPut("deleteCpurse/{id}")]
+        [HttpPut("deleteCourse/{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteCourse(int id)
         {
             var course = await context.Courses.FindAsync(id);
@@ -71,6 +83,8 @@ namespace APIs.Controllers
         }
 
         [HttpPut("assignCourseToTrainer")]
+        [ProducesResponseType(typeof(GetTrainerDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> AssignCourseToTrainer(AssignCourseToTrainerDto dto)
         {
             var course = await context.Courses.FindAsync(dto.CourseId);

@@ -156,16 +156,14 @@ namespace APIs.Services
             return returnedTrainers;
         }
 
+        // Method to report  each existing course with trainer it's assigned to
         public async Task<LocalReport> CourseTrainerReport()
         {
             var reportPath = $"{webHostEnvironment.WebRootPath}/CourseTrainerReport.rdlc";
-            var report = new LocalReport() { ReportPath = reportPath };
-            
-            var trainers = await userManager.Users.Where(u => !u.IsDeleted).ToListAsync();
-            //var returnedTrainers = mapper.Map<List<GetTrainerDto>>(trainers);
-            var courses =await appDbContext.Courses.ToListAsync();
+            var report = new LocalReport() { ReportPath = reportPath };           
 
-            var courseTrainerData = appDbContext.Courses
+            // Project course trainer data
+            var courseTrainerData = await appDbContext.Courses
             .Where(c => c.Trainer != null && !c.IsDeleted) // Ensure only assigned courses are included
             .Select(c => new CourseTrainer()
             {
@@ -177,11 +175,9 @@ namespace APIs.Services
               TrainerEmail = c.Trainer!.Email!,
               TrainerName = $"{c.Trainer.FirstName} {c.Trainer.LastName}",
               TrainerUserName = c.Trainer.UserName!
-            }).ToList();
+            }).ToListAsync();
 
             report.DataSources.Add(new ReportDataSource("CourseTrainer", courseTrainerData));
-            //report.DataSources.Add(new ReportDataSource("Trainer", trainers));
-            //report.DataSources.Add(new ReportDataSource("Course", courses));
             return report;
         }
 

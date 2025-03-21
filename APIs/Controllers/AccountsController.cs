@@ -1,5 +1,6 @@
 ﻿using API.Extensions;
 using APIs.DTOs;
+using APIs.DTOs.TrainerDtos;
 using APIs.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -12,6 +13,7 @@ namespace APIs.Controllers
     public class AccountsController(IAuthService authenticationService) : ControllerBase
     {
         [HttpGet("getTrainers")]
+        [ProducesResponseType(typeof(List<GetTrainerDto>), StatusCodes.Status200OK)]
         public async Task<IActionResult> GetTrainers()
         {
             var trainers = await authenticationService.GetTrainersAsync();
@@ -19,6 +21,8 @@ namespace APIs.Controllers
         }
 
         [HttpPost("register")]
+        [ProducesResponseType(typeof(AuthDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AuthDto), StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> Register(RegisterDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -33,6 +37,8 @@ namespace APIs.Controllers
         }
 
         [HttpPost("getToken")]
+        [ProducesResponseType(typeof(AuthDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(AuthDto), StatusCodes.Status401Unauthorized)]
         public async Task<ActionResult> GetTokenAsnc(LoginDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -47,6 +53,9 @@ namespace APIs.Controllers
         }
 
         [HttpGet("refreshToken")]
+        [ProducesResponseType(typeof(AuthDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(string), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         public async Task<IActionResult> RefreshToken()
         {
             var refreshToken = Request.Cookies["refreshToken"];
@@ -62,6 +71,9 @@ namespace APIs.Controllers
 
         [Authorize(Roles = "Trainer")]
         [HttpPut("updateTrainer")]
+        [ProducesResponseType(typeof(ResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ResponseDto), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(typeof(ResponseDto), StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdateTrainer(UpdateTrainerDto dto)
         {
             var id = User.GetUserId();
@@ -76,6 +88,7 @@ namespace APIs.Controllers
 
         [Authorize(Roles = "Trainer")]
         [HttpPut("deleteTrainer")]
+        [ProducesResponseType(typeof(ResponseDto), StatusCodes.Status200OK)]
         public async Task<IActionResult> DeleteTrainer()
         {
             var id = User.GetUserId();
@@ -84,6 +97,7 @@ namespace APIs.Controllers
         }
 
         [HttpGet("reports")]
+        [ProducesResponseType(typeof(File), StatusCodes.Status200OK)]
         public async Task<ActionResult> CourseTrainerReport()
         {
             var report = await authenticationService.CourseTrainerReport();
