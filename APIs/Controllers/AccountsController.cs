@@ -83,7 +83,13 @@ namespace APIs.Controllers
             return Ok(result);
         }
 
-        
+        [HttpGet("reports")]
+        public async Task<ActionResult> CourseTrainerReport()
+        {
+            var report = await authenticationService.CourseTrainerReport();
+            byte[] reportData = report.Render("PDF");
+            return File(reportData, System.Net.Mime.MediaTypeNames.Application.Octet, "CourseTrainerReport.pdf");
+        }
 
         private void SetRefreshTokenInCookie(string refreshToken, DateTime expires)
         {

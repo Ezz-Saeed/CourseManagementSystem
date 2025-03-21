@@ -1,13 +1,18 @@
-﻿using APIs.DTOs;
+﻿using APIs.Data;
+using APIs.DataSets;
+using APIs.DTOs;
 using APIs.DTOs.TrainerDtos;
 using APIs.Helpers;
 using APIs.Interfaces;
 using APIs.Models;
 using AutoMapper;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.Reporting.NETCore;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
@@ -16,7 +21,7 @@ using System.Text;
 namespace APIs.Services
 {
     public class AuthService(UserManager<Appuser> userManager,
-        IOptions<JWT> jwtOptions, IMapper mapper) : IAuthService
+        IOptions<JWT> jwtOptions, IMapper mapper, IWebHostEnvironment webHostEnvironment, AppDbContext appDbContext) : IAuthService
     {
         private readonly JWT jwt = jwtOptions.Value;
 
@@ -151,6 +156,34 @@ namespace APIs.Services
             return returnedTrainers;
         }
 
+        public async Task<LocalReport> CourseTrainerReport()
+        {
+            var reportPath = $"{webHostEnvironment.WebRootPath}/CourseTrainerReport.rdlc";
+            var report = new LocalReport() { ReportPath = reportPath };
+            
+            var trainers = await userManager.Users.Where(u => !u.IsDeleted).ToListAsync();
+            //var returnedTrainers = mapper.Map<List<GetTrainerDto>>(trainers);
+            var courses =await appDbContext.Courses.ToListAsync();
+
+            var courseTrainerData = appDbContext.Courses
+            .Where(c => c.Trainer != null && !c.IsDeleted) // Ensure only assigned courses are included
+            .Select(c => new CourseTrainer()
+            {
+              Id = c.Id,
+              Name = c.Name,
+              Description = c.Description,
+              StartDate = c.StartDate,
+              EndDate = c.EndDate,
+              TrainerEmail = c.Trainer!.Email!,
+              TrainerName = $"{c.Trainer.FirstName} {c.Trainer.LastName}",
+              TrainerUserName = c.Trainer.UserName!
+            }).ToList();
+
+            report.DataSources.Add(new ReportDataSource("CourseTrainer", courseTrainerData));
+            //report.DataSources.Add(new ReportDataSource("Trainer", trainers));
+            //report.DataSources.Add(new ReportDataSource("Course", courses));
+            return report;
+        }
 
         // Edit trainer account
         public async Task<ResponseDto> UpdateTrainerAsync(UpdateTrainerDto dto, string id)
