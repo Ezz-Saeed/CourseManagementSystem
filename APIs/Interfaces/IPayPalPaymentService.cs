@@ -7,5 +7,6 @@ namespace APIs.Interfaces
     {
         Task<TrainerPayment> CreatePaymentIntent(string trainerEmail, decimal amount);
         Task<TrainerPayment> CapturePayment(string paymentId);
+        Task<List<TrainerPayment>> GetTrainerTransactions(string trainerEmail);
     }
 }

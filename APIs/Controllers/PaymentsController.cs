@@ -27,6 +27,13 @@ public class PaymentsController(IPayPalPaymentService payPalPaymentService) : Co
         return Ok(payment);
     }
 
+    [HttpGet("trainerTransactions/{trainerEmail}")]
+    public async Task<IActionResult> GetTrainerTransactions(string trainerEmail)
+    {
+        var transactions = await payPalPaymentService.GetTrainerTransactions(trainerEmail);
+        return Ok(transactions);
+    }
+
     //[HttpPost("create")]
     //public IActionResult CreatePayment([FromBody] PaymentRequest request)
     //{
