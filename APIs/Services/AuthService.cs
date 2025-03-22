@@ -74,7 +74,7 @@ namespace APIs.Services
             // Unauthenticated user
             var authModel = new AuthDto();
             var user = await userManager.FindByEmailAsync(model.Email);
-            if (user is null || !await userManager.CheckPasswordAsync(user, model.Password))
+            if (user is null || !await userManager.CheckPasswordAsync(user, model.Password) || user.IsDeleted)
             {
                 authModel.Message = "Invalid email or password!";
                 return authModel;
@@ -235,7 +235,14 @@ namespace APIs.Services
             }
             
             user.IsDeleted = true;
+            var courses = await appDbContext.Courses.Where(c=>c.TrainerId == id).ToListAsync();
+            foreach(var course in courses)
+            {
+                course.TrainerId = null;
+            }
+            user.Courses = null;
             var updateResult = await userManager.UpdateAsync(user);
+            await appDbContext.SaveChangesAsync();
 
             // Check for update errors
             if (!updateResult.Succeeded)

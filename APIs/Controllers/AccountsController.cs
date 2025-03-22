@@ -92,6 +92,7 @@ namespace APIs.Controllers
         public async Task<IActionResult> DeleteTrainer()
         {
             var id = User.GetUserId();
+
             var result = await authenticationService.DeleteTrainerAsync(id);
             return Ok(result);
         }
@@ -111,7 +112,7 @@ namespace APIs.Controllers
             {
                 HttpOnly = true,
                 Expires = expires.ToLocalTime(),
-                Secure = true,
+                Secure = false,
                 SameSite = SameSiteMode.Strict,
             };
 

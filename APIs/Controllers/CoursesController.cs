@@ -77,6 +77,8 @@ namespace APIs.Controllers
             if(course is null) return NotFound();
 
             course.IsDeleted = true;
+            course.TrainerId = null;
+            course.Trainer = null;
             context.Courses.Update(course);
             await context.SaveChangesAsync();
             return Ok();
