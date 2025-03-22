@@ -21,7 +21,7 @@ namespace APIs
             builder.Services.AddControllers();
             
             builder.Services.AddIdentity<Appuser, IdentityRole>().AddEntityFrameworkStores<AppDbContext>();
-            var connection = builder.Configuration.GetConnectionString("connection") ?? 
+            var connection = builder.Configuration.GetConnectionString("RemoteConnection") ?? 
                 throw new NullReferenceException("connection couldn't be found");
             builder.Services.AddDbContext<AppDbContext>(options =>
             {
