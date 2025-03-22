@@ -1,4 +1,8 @@
-﻿using APIs.Interfaces;
+﻿using APIs.DTOs.CourseDtos;
+using APIs.DTOs.PaymentDtos;
+using APIs.Interfaces;
+using APIs.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 
@@ -8,7 +12,10 @@ public class PaymentsController(IPayPalPaymentService payPalPaymentService) : Co
 {
 
     [HttpPost("createPayment")]
-    public async Task<IActionResult> CreatePayment([FromBody] PaymentRequest request)
+    [Authorize(Roles ="Admin")]
+    [ProducesResponseType(typeof(TrainerPayment), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(string), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> CreatePayment([FromBody] PaymentRequestDto request)
     {
         var payment = await payPalPaymentService.CreatePaymentIntent(request.TrainerEmail, request.Amount);
         if (payment == null)
@@ -18,6 +25,9 @@ public class PaymentsController(IPayPalPaymentService payPalPaymentService) : Co
     }
 
     [HttpPost("capturePayment/{paymentId}")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(GetCourseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(AddCourseDto), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> CapturePayment(string paymentId)
     {
         var payment = await payPalPaymentService.CapturePayment(paymentId);
@@ -28,44 +38,11 @@ public class PaymentsController(IPayPalPaymentService payPalPaymentService) : Co
     }
 
     [HttpGet("trainerTransactions/{trainerEmail}")]
+    [Authorize(Policy = "AdminOrTrainer")]
+    [ProducesResponseType(typeof(List<TrainerPayment>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetTrainerTransactions(string trainerEmail)
     {
         var transactions = await payPalPaymentService.GetTrainerTransactions(trainerEmail);
         return Ok(transactions);
     }
-
-    //[HttpPost("create")]
-    //public IActionResult CreatePayment([FromBody] PaymentRequest request)
-    //{
-    //    var payment = _payPalService.CreatePayment(request.Amount, request.Currency);
-
-    //    var approvalUrl = payment.links.FirstOrDefault(l => l.rel == "approval_url")?.href;
-    //    return Ok(new { PaymentId = payment.id, ApprovalUrl = approvalUrl });
-    //}
-
-    //[HttpPost("capture")]
-    //public IActionResult CapturePayment([FromBody] CaptureRequest request)
-    //{
-    //    var payment = _payPalService.CapturePayment(request.PaymentId, request.PayerId);
-    //    return Ok(new { Message = "Payment successful!", PaymentId = payment.id });
-    //}
-
-    //[HttpGet("transactions")]
-    //public IActionResult GetTrainerTransactions()
-    //{
-    //    var transactions = _payPalService.GetTrainerTransactions();
-    //    return Ok(transactions);
-    //}
-}
-
-public class PaymentRequest
-{
-    public string TrainerEmail { get; set; }
-    public decimal Amount { get; set; }
-}
-
-public class CaptureRequest
-{
-    public string PaymentId { get; set; }
-    public string PayerId { get; set; }
 }
