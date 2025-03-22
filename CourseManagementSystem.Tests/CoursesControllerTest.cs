@@ -429,5 +429,103 @@ namespace CourseManagementSystem.Tests
             Assert.Equal("Update failed", badRequestResult.Value);
         }
 
+
+        [Fact]
+        public async Task RemoveCourseFromTrainer_WhenCourseAndTrainerExist_ReturnsOk()
+        {
+            // Arrange
+            var course = new Course { Name = "Test Course",
+                Description = "Sample Description",
+                StartDate = DateTime.Now.AddMonths(-2),
+                EndDate = DateTime.Now.AddMonths(2)
+            };
+            var trainer = new Appuser
+            {
+                Id = "trainer123",
+                Email = "trainer@example.com",
+                Courses = new List<Course> { course }
+            };
+
+            await _appDbContext.Courses.AddAsync(course);
+            await _appDbContext.SaveChangesAsync();
+
+            _userManager.Setup(x => x.FindByEmailAsync(trainer.Email)).ReturnsAsync(trainer);
+            _userManager.Setup(x => x.UpdateAsync(It.IsAny<Appuser>())).ReturnsAsync(IdentityResult.Success);
+
+            var dto = new AssignCourseToTrainerDto { CourseId = course.Id, TrainerEmail = trainer.Email };
+
+            // Act
+            var result = await _coursesController.RemoveCourseFromTrainer(dto);
+
+            // Assert
+            var okResult = Assert.IsType<OkObjectResult>(result);
+            Assert.Equal(200, okResult.StatusCode);
+            Assert.Equal("Course remove successfully", okResult.Value);
+        }
+
+        [Fact]
+        public async Task RemoveCourseFromTrainer_WhenCourseDoesNotExist_ReturnsBadRequest()
+        {
+            // Arrange
+            var dto = new AssignCourseToTrainerDto { CourseId = 999, TrainerEmail = "trainer@example.com" };
+            _userManager.Setup(x => x.FindByEmailAsync(dto.TrainerEmail)).ReturnsAsync(new Appuser());
+
+            // Act
+            var result = await _coursesController.RemoveCourseFromTrainer(dto);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal(400, badRequestResult.StatusCode);
+            Assert.Equal("Course not found.", badRequestResult.Value);
+        }
+
+        [Fact]
+        public async Task RemoveCourseFromTrainer_WhenTrainerDoesNotExist_ReturnsBadRequest()
+        {
+            // Arrange
+            var course = new Course {Name = "Test Course",
+                Description = "Sample Description",
+                StartDate = DateTime.Now.AddMonths(-2),
+                EndDate = DateTime.Now.AddMonths(2)
+            };
+            await _appDbContext.Courses.AddAsync(course);
+            await _appDbContext.SaveChangesAsync();
+
+            var dto = new AssignCourseToTrainerDto { CourseId = course.Id, TrainerEmail = "nonexistent@example.com" };
+            _userManager.Setup(x => x.FindByEmailAsync(dto.TrainerEmail)).ReturnsAsync((Appuser?)null);
+
+            // Act
+            var result = await _coursesController.RemoveCourseFromTrainer(dto);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal(400, badRequestResult.StatusCode);
+            Assert.Equal("Trainer not found.", badRequestResult.Value);
+        }
+
+        [Fact]
+        public async Task RemoveCourseFromTrainer_WhenTrainerIsNotAssignedToCourse_ReturnsBadRequest()
+        {
+            // Arrange
+            var course = new Course { Name = "Test Course",
+                Description = "Sample Description",
+                StartDate = DateTime.Now.AddMonths(-2),
+                EndDate = DateTime.Now.AddMonths(2)
+            };
+            var trainer = new Appuser { Id = "trainer123", Email = "trainer@example.com", Courses = new List<Course>() };
+            await _appDbContext.Courses.AddAsync(course);
+            await _appDbContext.SaveChangesAsync();
+            _userManager.Setup(x => x.FindByEmailAsync(trainer.Email)).ReturnsAsync(trainer);
+
+            var dto = new AssignCourseToTrainerDto { CourseId = course.Id, TrainerEmail = trainer.Email };
+
+            // Act
+            var result = await _coursesController.RemoveCourseFromTrainer(dto);
+
+            // Assert
+            var badRequestResult = Assert.IsType<BadRequestObjectResult>(result);
+            Assert.Equal(400, badRequestResult.StatusCode);
+            Assert.Equal("Trainer is not assigned to this course.", badRequestResult.Value);
+        }
     }
 }

@@ -100,5 +100,29 @@ namespace APIs.Controllers
             var updatedTrainer = mapper.Map<GetTrainerDto>(trainer);
             return Ok(updatedTrainer);
         }
+
+        [HttpPut("removeCourseFromTrainer")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<IActionResult> RemoveCourseFromTrainer(AssignCourseToTrainerDto dto)
+        {
+            var course = await context.Courses.FindAsync(dto.CourseId);
+            if (course is null) return BadRequest("Course not found.");
+
+            var trainer = await userManager.FindByEmailAsync(dto.TrainerEmail);
+            if (trainer is null) return BadRequest("Trainer not found.");
+
+            if (trainer.Courses == null || !trainer.Courses.Contains(course))
+                return BadRequest("Trainer is not assigned to this course.");
+
+            trainer.Courses.Remove(course);
+            var result = await userManager.UpdateAsync(trainer);
+
+            if (!result.Succeeded)
+                return BadRequest($"{string.Join(", ", result.Errors.Select(e => e.Description))}");
+
+            return Ok("Course remove successfully");
+        }
+
     }
 }
