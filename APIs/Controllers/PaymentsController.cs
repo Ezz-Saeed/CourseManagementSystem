@@ -17,6 +17,16 @@ public class PaymentsController(IPayPalPaymentService payPalPaymentService) : Co
         return Ok(payment);
     }
 
+    [HttpPost("capturePayment/{paymentId}")]
+    public async Task<IActionResult> CapturePayment(string paymentId)
+    {
+        var payment = await payPalPaymentService.CapturePayment(paymentId);
+        if (payment == null)
+            return BadRequest("Payment not found");
+
+        return Ok(payment);
+    }
+
     //[HttpPost("create")]
     //public IActionResult CreatePayment([FromBody] PaymentRequest request)
     //{
