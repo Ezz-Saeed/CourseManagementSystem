@@ -47,3 +47,6 @@ Payments
 Process Payment for Trainer: POST /api/payments/{trainerId}
 Get Trainer Payments: GET /api/payments/{trainerId}
 
+
+
+You can login as admin using "admin@example.com" as email and "Admin@123" as password 
